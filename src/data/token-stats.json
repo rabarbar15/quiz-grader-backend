@@ -1,0 +1,16 @@
+{
+  "totalTokensUsed": 143854,
+  "totalPromptTokens": 101061,
+  "totalCompletionTokens": 42793,
+  "requestsCount": 83,
+  "averageTokensPerRequest": 1733,
+  "lastUpdated": "2025-08-30T21:59:25.949Z",
+  "usageByEndpoint": {
+    "/api/grade-questions": {
+      "totalTokens": 143854,
+      "promptTokens": 101061,
+      "completionTokens": 42793,
+      "requests": 83
+    }
+  }
+}
