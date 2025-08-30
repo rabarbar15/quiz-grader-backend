@@ -14,7 +14,7 @@ interface PromptInfo {
   length: number;
 }
 
-const PROMPTS_DIR = path.resolve(__dirname, '../config/prompts');
+const PROMPTS_DIR = path.resolve(__dirname, "../config/prompts");
 
 class PromptService {
   private promptsDir: string;
