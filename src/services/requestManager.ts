@@ -1,18 +1,23 @@
-let activeController: AbortController | null = null;
+class RequestManager {
+  private activeTasks: Map<string, AbortController> = new Map();
 
-export const setActiveRequest = (controller: AbortController) => {
-  activeController = controller;
-};
-
-export const cancelActiveRequest = (): boolean => {
-  if (activeController) {
-    activeController.abort();
-    activeController = null;
-    return true;
+  setActiveTask(quizId: string, controller: AbortController) {
+    this.activeTasks.set(quizId, controller);
   }
-  return false;
-};
 
-export const clearActiveRequest = () => {
-  activeController = null;
-};
+  cancelActiveTask(quizId: string): boolean {
+    const controller = this.activeTasks.get(quizId);
+    if (controller) {
+      controller.abort();
+      this.clearActiveTask(quizId);
+      return true;
+    }
+    return false;
+  }
+
+  clearActiveTask(quizId: string) {
+    this.activeTasks.delete(quizId);
+  }
+}
+
+export default new RequestManager();

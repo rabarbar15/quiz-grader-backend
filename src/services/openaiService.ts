@@ -1,121 +1,101 @@
-import axios from "axios";
 import { config } from "../config/env";
-import { OpenAIChatResponse, QuestionToGrade, StudentData } from "../types";
+import { OpenAIChatRequest, QuestionToGrade, StudentData } from "../types";
 import { logTokenUsage } from "../utils/tokenLogger";
-import { setActiveRequest, clearActiveRequest } from "./requestManager";
 import promptService from "./promptService";
 
+export interface GradingResponse {
+  scores: {
+    id: string;
+    score: number;
+    justification: string;
+  }[];
+}
+
 export class OpenAIService {
+  static async fetchOpenAICompletion(
+    requestBody: OpenAIChatRequest,
+    signal: AbortSignal,
+  ) {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${config.OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify(requestBody),
+      signal: signal,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(
+        `OpenAI API error: ${response.status} - ${JSON.stringify(errorData)}`,
+      );
+    }
+
+    const data = await response.json();
+    if (data.usage) {
+      await logTokenUsage("/api/grade-questions", data.usage, "gpt-4o-mini");
+    }
+    return data.choices[0].message.content;
+  }
+
   static async gradeQuestion(
     question: QuestionToGrade,
     language: string,
-  ): Promise<any> {
-    const controller = new AbortController();
-    setActiveRequest(controller);
+    signal: AbortSignal,
+  ) {
+    const answers = question.answers
+      .map((a) => `- ID: "${a.id}", Answer: "${a.answer}"`)
+      .join("\n");
 
-    try {
-      const response = await axios.post<OpenAIChatResponse>(
-        "https://api.openai.com/v1/chat/completions",
-        {
-          model: "gpt-4o-mini",
-          response_format: { type: "json_object" },
-          messages: [
-            {
-              role: "system",
-              // content: `${config.SYSTEM_PROMPT}\n\nJustification should be in ${language}.`,
-              content: `${promptService.getPrompt("grading", language)}\n\nJustification should be in ${language}.`,
-            },
-            {
-              role: "user",
-              content: `QUESTION: "${question.text}"\n\nANSWERS:\n${question.answers
-                .map((a) => `- ID: "${a.id}", Answer: "${a.answer}"`)
-                .join("\n")}`,
-            },
-          ],
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${config.OPENAI_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          signal: controller.signal,
-        },
-      );
+    const systemContent = `${promptService.getPrompt("grading", language)}\n\nJustification should be in ${language}.`;
+    const userContent = `QUESTION: "${question.text}"\n\nANSWERS:\n${answers}`;
 
-      if (response.data.usage) {
-        await logTokenUsage(
-          "/api/grade-questions",
-          response.data.usage,
-          "gpt-4o-mini",
-        );
-      }
+    const requestBody: OpenAIChatRequest = {
+      model: "gpt-4o-mini",
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: systemContent },
+        { role: "user", content: userContent },
+      ],
+    };
 
-      return JSON.parse(response.data.choices[0].message.content);
-    } catch (error: any) {
-      if (axios.isCancel(error)) {
-        throw new Error("Request cancelled");
-      }
-      throw error;
-    } finally {
-      clearActiveRequest();
+    if (signal.aborted) {
+      throw new Error("Grading was canceled.");
     }
+
+    const content = await this.fetchOpenAICompletion(requestBody, signal);
+    return JSON.parse(content);
   }
 
   static async generateFeedback(
     studentData: StudentData,
     language: string,
-  ): Promise<string> {
-    const controller = new AbortController();
-    setActiveRequest(controller);
+    signal: AbortSignal,
+  ) {
+    const answersAndFeedback = Object.entries(studentData.responses)
+      .map(
+        ([question, details]) =>
+          `- QUESTION: "${question}", ANSWER: "${details.answer}", FEEDBACK: "${details.feedback}"`,
+      )
+      .join("\n");
 
-    try {
-      const response = await axios.post<OpenAIChatResponse>(
-        "https://api.openai.com/v1/chat/completions",
-        {
-          model: "gpt-4o-mini",
-          messages: [
-            {
-              role: "system",
-              content: `${promptService.getPrompt("feedback", language)}`,
-            },
-            {
-              role: "user",
-              content: `STUDENT ANSWERS AND GRADES:\n${Object.entries(
-                studentData.responses,
-              )
-                .map(
-                  ([question, details]) =>
-                    `- QUESTION: "${question}", ANSWER: "${details.answer}", FEEDBACK: "${details.feedback}"`,
-                )
-                .join("\n")}`,
-            },
-          ],
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${config.OPENAI_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          signal: controller.signal,
-        },
-      );
+    const systemContent = `${promptService.getPrompt("feedback", language)}`;
+    const userContent = `STUDENT ANSWERS AND GRADES:\n${answersAndFeedback}`;
+    const requestBody: OpenAIChatRequest = {
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: systemContent },
+        { role: "user", content: userContent },
+      ],
+    };
 
-      if (response.data.usage) {
-        await logTokenUsage(
-          "/api/grade-questions",
-          response.data.usage,
-          "gpt-4o-mini",
-        );
-      }
-
-      return response.data.choices[0].message.content;
-    } catch (error: any) {
-      if (axios.isCancel(error)) {
-        throw new Error("Request cancelled");
-      }
-      throw error;
-    } finally {
-      clearActiveRequest();
+    if (signal.aborted) {
+      throw new Error("Feedback generation was canceled.");
     }
+
+    const content = await this.fetchOpenAICompletion(requestBody, signal);
+    return content;
   }
 }

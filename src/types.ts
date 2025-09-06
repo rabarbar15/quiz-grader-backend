@@ -49,7 +49,26 @@ export interface StudentData {
   };
 }
 
-export interface OpenAIChatResponse {
-  choices: { message: { content: string } }[];
-  usage?: any;
+export interface OpenAIChatRequest {
+  model: string;
+  response_format?: {
+    type: string;
+  };
+  messages: {
+    role: "user" | "system";
+    content: string;
+  }[];
+}
+
+export interface Prompt {
+  system: string;
+  version?: string;
+  last_updated?: string;
+}
+
+export interface PromptInfo {
+  name: string;
+  version?: string;
+  last_updated?: string;
+  length: number;
 }

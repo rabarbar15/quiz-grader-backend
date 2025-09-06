@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { promises as fs } from "fs";
 import { TokenUsage, UsageData } from "../types";
 import * as path from "path";
@@ -35,10 +36,14 @@ export const logTokenUsage = async (
   try {
     const data = await fs.readFile(LOG_FILE, "utf8");
     usageData = JSON.parse(data);
-  } catch (err: any) {
-    if (err.code !== "ENOENT") {
-      console.error("Error reading log file:", err);
-      return;
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      console.error(
+        "Error reading log file, initializing new log:",
+        err.message,
+      );
+    } else {
+      console.error("Unknown error reading log file, initializing new log.");
     }
   }
 

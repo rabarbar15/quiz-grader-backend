@@ -1,5 +1,5 @@
 // server.ts
-import express, { Request, Response, Application } from "express";
+import express, { Application } from "express";
 import cors from "cors";
 import router from "./routes/apiRoutes";
 import dotenv from "dotenv";
@@ -14,5 +14,6 @@ app.use("/api", router);
 
 const PORT: number = parseInt(process.env.PORT || "3001", 10);
 app.listen(PORT, (): void => {
+  // eslint-disable-next-line no-console
   console.log(`Server running on port ${PORT}`);
 });

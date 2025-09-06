@@ -1,18 +1,7 @@
+/* eslint-disable no-console */
 import fs from "fs";
 import path from "path";
-
-interface Prompt {
-  system: string;
-  version?: string;
-  last_updated?: string;
-}
-
-interface PromptInfo {
-  name: string;
-  version?: string;
-  last_updated?: string;
-  length: number;
-}
+import { Prompt, PromptInfo } from "../types";
 
 const PROMPTS_DIR = path.resolve(__dirname, "../config/prompts");
 
