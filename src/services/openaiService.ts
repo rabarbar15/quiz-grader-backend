@@ -3,20 +3,13 @@ import { OpenAIChatRequest, QuestionToGrade, StudentData } from "../types";
 import { logTokenUsage } from "../utils/tokenLogger";
 import promptService from "./promptService";
 
-export interface GradingResponse {
-  scores: {
-    id: string;
-    score: number;
-    justification: string;
-  }[];
-}
-
 export class OpenAIService {
   static async fetchOpenAICompletion(
     requestBody: OpenAIChatRequest,
     signal: AbortSignal,
   ) {
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    const openAiUrl = config.OPENAI_API_URL;
+    const response = await fetch(openAiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

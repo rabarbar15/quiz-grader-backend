@@ -1,16 +1,16 @@
 {
-  "totalTokensUsed": 14484,
-  "totalPromptTokens": 8972,
-  "totalCompletionTokens": 5512,
-  "requestsCount": 12,
-  "averageTokensPerRequest": 1207,
-  "lastUpdated": "2025-09-06T22:12:35.409Z",
+  "totalTokensUsed": 20963,
+  "totalPromptTokens": 13706,
+  "totalCompletionTokens": 7257,
+  "requestsCount": 15,
+  "averageTokensPerRequest": 1398,
+  "lastUpdated": "2025-09-06T22:18:03.545Z",
   "usageByEndpoint": {
     "/api/grade-questions": {
-      "totalTokens": 14484,
-      "promptTokens": 8972,
-      "completionTokens": 5512,
-      "requests": 12
+      "totalTokens": 20963,
+      "promptTokens": 13706,
+      "completionTokens": 7257,
+      "requests": 15
     }
   }
 }
